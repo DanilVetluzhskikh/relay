@@ -1,50 +1,78 @@
-import React, { FC, FormEvent, useEffect, useState } from "react";
-import { DetailsList, IDropdownOption, PrimaryButton } from "@fluentui/react";
-import { PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Repository, UserData } from "../../types/user";
-import { UserInfoQuery } from "../../graphql/query";
+import React, { createContext, FC, useState } from "react";
+import { DetailsList, PrimaryButton, Spinner } from "@fluentui/react";
+import { usePaginationFragment } from "react-relay";
+import { Repository } from "../../types/user";
 import { columnsRepositories } from "../../mocks/columns";
+import { fragmentUserInfo } from "../../graphql/query";
+import { GetUserInfoQueryFragment$key} from '../../graphql/query/__generated__/GetUserInfoQueryFragment.graphql'
+import { FIRST_LOAD } from "../../constants/repositories";
+import { HeaderSort } from "../HeaderSort";
+import { GetUserInfoQuery } from "../../graphql/query/__generated__/GetUserInfoQuery.graphql";
+import {GetUserInfoQuery$data} from '../../graphql/query/__generated__/GetUserInfoQuery.graphql'
+import { listContextProps } from "../../types/context";
+import {EditModal} from '../EditModal'
 
 import './styles.css'
 
 interface ListRepositoriesProps {
-    preloadedQuery: PreloadedQuery<any, Record<string, unknown>> | null | undefined;
-    changeCount: () => void;
-    currentCount: number;
-    selectSortOption: (e: FormEvent<HTMLDivElement>, option?: IDropdownOption) => void;
+    preloaded: GetUserInfoQuery$data
 }
 
+export const listContext = createContext<listContextProps | null>(null);
+
 export const ListRepositories: FC<ListRepositoriesProps> = ({
-    preloadedQuery, 
-    changeCount,
-    currentCount,
-}) => {    
-    const [repositories, setRepositories] = useState<Repository[]>([])
+    preloaded
+}) => {
+    const [isModalEditOpen, setIsModalEditOpen] = useState(false)
+    const [count, setCount] = useState(FIRST_LOAD)
+    const [currentItem, setCurrentItem] = useState<Repository | null>(null)
+    const {data, loadNext, hasNext, isLoadingNext, refetch} = usePaginationFragment<GetUserInfoQuery, GetUserInfoQueryFragment$key>(fragmentUserInfo, preloaded.user)
     
-    const data = usePreloadedQuery(UserInfoQuery, preloadedQuery as any) as UserData;
-    const countRepositories =  data?.user?.repositories?.totalCount
+    const handleLoadMore = () => {
+        setCount(prev => prev+=FIRST_LOAD)
+        loadNext(FIRST_LOAD)
+    }
 
-    useEffect(() => {
-        const resultArray = data?.user?.repositories?.edges
+    const handleOpenEditModal = (item: Repository) => {
+        setCurrentItem(item)
+        setIsModalEditOpen(true)
+    }
+    const handleCloseEditModal = () => setIsModalEditOpen(false)
 
-        if(resultArray?.length){
-            setRepositories(resultArray.map((item: any) => ({...item.node})))
-        }
-    }, [data])
+    const providerObject = {
+        count,
+        refetch,
+        handleCloseEditModal,
+        isModalEditOpen,
+        currentItem,
+        id: data?.id,
+        totalCount: data?.repositories.totalCount
+    }
+
+    const resultList = data?.repositories.edges?.map(item => ({...item?.node})) || []
 
     return (
-        <div className="container"> 
-            <DetailsList
-                items={repositories}
-                columns={columnsRepositories}
-                getKey={getKey}
-                isSelectedOnFocus={false}
-            />
+        <listContext.Provider value={providerObject}>
+            <div className="container">
+                <HeaderSort />
 
-            {currentCount < countRepositories && (
-                <PrimaryButton onClick={changeCount}>Load more</PrimaryButton>
-            )}
-        </div>
+                <DetailsList
+                    items={resultList}
+                    columns={columnsRepositories}
+                    getKey={getKey}
+                    onItemInvoked={handleOpenEditModal}
+                />
+
+
+                {
+                    isLoadingNext 
+                        ? <Spinner label="Loading..." /> 
+                        : hasNext && <PrimaryButton onClick={handleLoadMore}>Load more</PrimaryButton>
+                }
+
+                <EditModal />
+            </div>
+        </listContext.Provider>
     )
 }
 

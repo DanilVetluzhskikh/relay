@@ -3,9 +3,4 @@
   justify-content: center;
   flex-direction: column;
 }
-.header-container {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
 /*# sourceMappingURL=styles.css.map */
