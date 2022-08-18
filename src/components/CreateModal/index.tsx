@@ -6,17 +6,20 @@ import { CreateRepositoryMutation as CreateRepositoryMutationType } from '../../
 import { listContext } from '../ListRepositories';
 import { createRepository } from '../../utils/updater'
 import { ModalContainer } from '../../ui/containers/ModalContainer';
+import { RepositoryOrder } from '../../graphql/query/__generated__/UserFragmentRefetchableQuery.graphql';
 
 import './styles.css'
 
 interface CreateModalProps {
     isOpen: boolean;
     handleClose: () => void;
+    sort: RepositoryOrder | null;
 }
 
 export const CreateModal: FC<CreateModalProps> = ({
     isOpen,
     handleClose,
+    sort,
 }) => {
     const propsContext = useContext(listContext)
     
@@ -76,8 +79,8 @@ export const CreateModal: FC<CreateModalProps> = ({
                 setIsResult(false)
             },
             updater(store){
-                if(propsContext?.id){
-                    createRepository(store, propsContext.id)                  
+                if(propsContext?.id){                    
+                    createRepository(store, propsContext.id, sort)                  
                 }
             }
         })        

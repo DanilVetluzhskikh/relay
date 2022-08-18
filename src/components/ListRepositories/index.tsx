@@ -24,12 +24,10 @@ export const ListRepositories: FC<ListRepositoriesProps> = ({
     preloaded
 }) => {
     const [isModalEditOpen, setIsModalEditOpen] = useState(false)
-    const [count, setCount] = useState(FIRST_LOAD)
     const [currentItem, setCurrentItem] = useState<Repository | null>(null)
     const {data, loadNext, hasNext, isLoadingNext, refetch} = usePaginationFragment<GetUserInfoQuery, GetUserInfoQueryFragment$key>(fragmentUserInfo, preloaded.user)
-    
+
     const handleLoadMore = () => {
-        setCount(prev => prev+=FIRST_LOAD)
         loadNext(FIRST_LOAD)
     }
 
@@ -40,7 +38,6 @@ export const ListRepositories: FC<ListRepositoriesProps> = ({
     const handleCloseEditModal = () => setIsModalEditOpen(false)
 
     const providerObject = {
-        count,
         refetch,
         handleCloseEditModal,
         isModalEditOpen,

@@ -1,12 +1,14 @@
 import { ConnectionHandler, RecordSourceSelectorProxy } from "relay-runtime";
+import { RepositoryOrder } from "../graphql/query/__generated__/UserFragmentRefetchableQuery.graphql";
 
-export const createRepository = (store: RecordSourceSelectorProxy, id: string) => {
+export const createRepository = (store: RecordSourceSelectorProxy, id: string, sort: RepositoryOrder | null) => {
     const repositoryRecord = store.get(id);
 
     if(repositoryRecord){
         const connectionRecord = ConnectionHandler.getConnection(
             repositoryRecord,
             'UserFragment_repositories',
+            {orderBy: sort}
         );
 
         if(connectionRecord){
@@ -28,11 +30,11 @@ export const createRepository = (store: RecordSourceSelectorProxy, id: string) =
                         connectionRecord.setValue(totalCount + 1, 'totalCount')
                     }
                     
-                    if(newEdge){
+                    if(newEdge){                        
                         ConnectionHandler.insertEdgeBefore(
                             connectionRecord,
-                            newEdge,
-                        );                
+                            newEdge
+                        );           
                     }
                 }
             }

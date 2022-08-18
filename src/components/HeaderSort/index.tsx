@@ -3,6 +3,7 @@ import { Dropdown, IDropdownOption, PrimaryButton } from '@fluentui/react'
 import { optionsSortRepositories } from '../../mocks/options'
 import { CreateModal } from '../CreateModal'
 import { listContext } from '../ListRepositories'
+import { OrderDirection, RepositoryOrder } from '../../graphql/query/__generated__/UserFragmentRefetchableQuery.graphql'
 
 import './styles.css'
 
@@ -10,18 +11,24 @@ export const HeaderSort: FC = () => {
     const propsContext = useContext(listContext) 
      
     const [isOpen, setIsOpen] = useState(false)
+    const [sort, setSort] = useState<RepositoryOrder | null>(null)
 
     const handleClose = () => setIsOpen(false)
     const handleOpen = () => setIsOpen(true)
 
-    const selectSortOption = (_: FormEvent<HTMLDivElement>, option?: IDropdownOption) => {        
-        propsContext?.refetch({
-            orderBy: {
+    const selectSortOption = (_: FormEvent<HTMLDivElement>, option?: IDropdownOption) => {
+        if(option?.id){            
+            const orderBy: RepositoryOrder = {
                 field: 'NAME',
-                direction: option?.id,
-            },
-            first: propsContext?.count
-        })
+                direction: option.id as OrderDirection,
+            }
+
+            setSort(orderBy)
+        
+            propsContext?.refetch({
+                orderBy
+            })
+        }
     }
 
     return (
@@ -43,6 +50,7 @@ export const HeaderSort: FC = () => {
             <CreateModal
                 isOpen={isOpen}
                 handleClose={handleClose}
+                sort={sort}
             />
         </>
     )

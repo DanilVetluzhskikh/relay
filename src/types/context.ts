@@ -5,7 +5,6 @@ import { GetUserInfoQueryFragment$key } from "../graphql/query/__generated__/Get
 import { Repository } from "./user";
 
 export type listContextProps = {
-    count: number;
     refetch: RefetchFnDynamic<GetUserInfoQuery, GetUserInfoQueryFragment$key | null, Options>;
     id?: string;
     totalCount?: number;
